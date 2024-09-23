@@ -1,0 +1,516 @@
+---
+title: "Análisis Pobración (Talla, Gustos, Nivel Académico, Tipo De Vivienda y Salario)"
+format: pptx
+editor: visual
+css: style.css
+always_allow_html: yes
+---
+
+```{r}
+#| warning: false
+#| echo: false
+#| output: false
+
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+# Instalar y cargar el paquete readxl si es necesario
+if (!requireNamespace("readxl", quietly = TRUE)) {
+  install.packages("readxl")
+}
+library(readxl)
+# Leer el archivo de Excel sin mostrar la salida en la presentación
+base_de_datos_1 <- read_excel("musica.xlsx")
+#View(base_de_datos_1)
+
+## libreria para curtosis y asimetria
+if (!requireNamespace("moments", quietly = TRUE)) {
+  install.packages("moments")
+}
+library(moments)
+
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if (!requireNamespace("gridExtra", quietly = TRUE)) {
+  install.packages("gridExtra")
+}
+library(gridExtra)
+
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
+
+library(dplyr)
+
+if (!requireNamespace("knitr", quietly = TRUE)) {
+  install.packages("knitr")
+}
+library(knitr)
+
+if (!requireNamespace("scales", quietly = TRUE)) {
+  install.packages("scales")
+}
+library(scales) # Para formatear los números con símbolo de dólar y separador de miles
+
+if (!requireNamespace("kableExtra", quietly = TRUE)) {
+  install.packages("kableExtra")
+}
+library(kableExtra) # Para estilos adicionales en tablas
+
+if (!requireNamespace("gt", quietly = TRUE)) {
+  install.packages("gt")
+}
+library(gt)
+
+```
+
+## Objetivos
+
+-   Identificar tendencias significativas en las variables de peso, talla y salario
+-   Analizar la distribución de gustos y su relación con el nivel académico.
+-   Examinar la relación entre el tipo de vivienda y el salario.
+
+## Análisis Peso
+
+La distribución del peso en estos datos es aproximadamente simétrica y cercana a una distribución normal, sin evidencia de valores atípicos significativos o una inclinación pronunciada. Los individuos en el conjunto de datos tienden a tener pesos cercanos al promedio de 67-68 kg, lo que sugiere una consistencia en esta variable entre los sujetos estudiados.
+
+```{r}
+asimetria_peso <- skewness(base_de_datos_1$Peso)
+curtosis_peso <- kurtosis(base_de_datos_1$Peso)
+media_peso <- mean(base_de_datos_1$Peso)
+mediana_peso <- median(base_de_datos_1$Peso)
+
+grafico_barras_peso <- ggplot(base_de_datos_1, aes(x = Peso)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 1,
+                 fill = "grey",
+                 color = "black",
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = media_peso, color = "Media"),
+             linetype = "dashed",
+             size = 1) +
+  geom_vline(aes(xintercept = mediana_peso, color = "Mediana"),
+             linetype = "dashed",
+             size = 1) +
+  scale_color_manual(name = "Estadístico",
+                     values = c(Media = "red", Mediana = "blue")) +
+  labs(title = "Distribución de Peso (con Media y Mediana)",
+       x = "Peso",
+       y = "Densidad") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Asimetría: ", round(asimetria_peso, 2)),
+           hjust = 1.1, vjust = 2, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Media: ", round(media_peso, 2)),
+           hjust = 1.1, vjust = 4, size = 4, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Mediana: ", round(mediana_peso, 2)),
+           hjust = 1.1, vjust = 6, size = 4, color = "blue") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Curtosis: ", round(curtosis_peso, 2)),
+           hjust = 1.1, vjust = 8, size = 4, color = "purple")
+
+boxplot_peso <- ggplot(base_de_datos_1, aes(x = Peso)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "",
+       x = "Peso") +
+  theme_minimal()
+
+# Mostrar ambos gráficos en la misma diapositiva
+grid.arrange(grafico_barras_peso, boxplot_peso, ncol = 1, heights = c(6, 2))
+```
+
+## Análisis Talla
+
+La distribución de la talla en estos datos es simétrica y aproximadamente normal, con una media y una mediana casi iguales y una curtosis que indica una distribución similar a la normal. No hay evidencia de valores atípicos significativos ni de una desviación marcada de la normalidad. La mayoría de los individuos tienen tallas cercanas a 168-169 cm, lo que sugiere una uniformidad en esta característica entre los sujetos estudiados.
+
+```{r}
+asimetria_talla <- skewness(base_de_datos_1$Talla)
+curtosis_talla <- kurtosis(base_de_datos_1$Talla)
+media_talla <- mean(base_de_datos_1$Talla)
+mediana_talla <- median(base_de_datos_1$Talla)
+
+grafico_barras_talla <- ggplot(base_de_datos_1, aes(x = Talla)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 1,
+                 fill = "grey",
+                 color = "black",
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = media_talla, color = "Media"),
+             linetype = "dashed",
+             size = 1) +
+  geom_vline(aes(xintercept = mediana_talla, color = "Mediana"),
+             linetype = "dashed",
+             size = 1) +
+  scale_color_manual(name = "Estadístico",
+                     values = c(Media = "red", Mediana = "blue")) +
+  labs(title = "Distribución de Talla (con Media y Mediana)",
+       x = "Talla",
+       y = "Densidad") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Asimetría: ", round(asimetria_talla, 2)),
+           hjust = 1.1, vjust = 2, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Media: ", round(media_talla, 2)),
+           hjust = 1.1, vjust = 4, size = 4, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Mediana: ", round(mediana_talla, 2)),
+           hjust = 1.1, vjust = 6, size = 4, color = "blue") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Curtosis: ", round(curtosis_talla, 2)),
+           hjust = 1.1, vjust = 8, size = 4, color = "purple")
+
+boxplot_talla <- ggplot(base_de_datos_1, aes(x = Talla)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "",
+       x = "Talla") +
+  theme_minimal()
+
+# Mostrar ambos gráficos en la misma diapositiva
+grid.arrange(grafico_barras_talla, boxplot_talla, ncol = 1, heights = c(6, 2))
+```
+
+## Análisis Salario
+
+**Distribución Sesgada:** La distribución de los salarios está claramente sesgada hacia la derecha, lo que sugiere una desigualdad en los salarios dentro del conjunto de datos. Un pequeño número de individuos con salarios muy altos están influyendo significativamente en las estadísticas de la media.
+
+**Salarios Elevados Afectan la Media:** La media es significativamente mayor que la mediana, indicando que los salarios elevados están tirando del promedio hacia arriba, lo que puede no representar el salario típico de la mayoría de las personas en el conjunto de datos.
+
+**Presencia de Valores Atípicos:** La alta curtosis y los outliers en el boxplot sugieren que algunos individuos tienen salarios mucho más altos que el resto.
+
+```{r}
+
+asimetria_salario <- skewness(base_de_datos_1$SALARIO)
+curtosis_salario <- kurtosis(base_de_datos_1$SALARIO)
+media_salario <- mean(base_de_datos_1$SALARIO)
+mediana_salario <- median(base_de_datos_1$SALARIO)
+
+grafico_barras_salario <- ggplot(base_de_datos_1, aes(x = SALARIO)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 50000,
+                 fill = "grey",
+                 color = "black",
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = media_salario, color = "Media"),
+             linetype = "dashed",
+             size = 1) +
+  geom_vline(aes(xintercept = mediana_salario, color = "Mediana"),
+             linetype = "dashed",
+             size = 1) +
+  scale_color_manual(name = "Estadístico",
+                     values = c(Media = "red", Mediana = "blue")) +
+  labs(title = "Distribución de Salario (con Media y Mediana)",
+       x = "Salario",
+       y = "Densidad") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Asimetría: ", round(asimetria_salario, 2)),
+           hjust = 1.1, vjust = 2, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Media: ", round(media_salario, 2)),
+           hjust = 1.1, vjust = 4, size = 4, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Mediana: ", round(mediana_salario, 2)),
+           hjust = 1.1, vjust = 6, size = 4, color = "blue") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Curtosis: ", round(curtosis_salario, 2)),
+           hjust = 1.1, vjust = 8, size = 4, color = "purple")
+
+boxplot_salario <- ggplot(base_de_datos_1, aes(x = SALARIO)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "",
+       x = "Talla") +
+  theme_minimal()
+
+# Mostrar ambos gráficos en la misma diapositiva
+grid.arrange(grafico_barras_salario, boxplot_salario, ncol = 1, heights = c(3, 1))
+```
+
+## Análisis Gustos (General)
+
+**DEPORTE** es claramente la actividad favorita entre las personas, mientras que **DESCANSAR** es, por mucho, la menos favorita.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = GUSTO)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Distribución de Gustos",
+       x = "Gusto",
+       y = "Frecuencia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Análisis Nivel Academico (General)
+
+**PROFESIONAL** es el principal nivel academico, mientras que **POSTGRADO** es el nivel menos representado.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = `NIVEL ACADEMICO`)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Distribución de Nivel Academico",
+       x = "Nivel Academico",
+       y = "Frecuencia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Análisis Vivienda (General)
+
+**ARRIENDO** es por mucho principal tipo de vivienda en los encuestados, mientras que **FAMILIAR** es la menos representada.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = VIVIENDA)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Distribución de Vivienda",
+       x = "Vivienda",
+       y = "Frecuencia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Análisis Segmentado de Gustos por Nivel Académico
+
+**Diversidad de Gustos:** Las personas con bachillerato muestran una mayor variedad de intereses en sus actividades.
+
+**Equilibrio Profesional:** Los profesionales tienen una distribución equitativa de preferencias entre diferentes tipos de actividades.
+
+**Postgrado y Lectura:** Aquellos con estudios de postgrado tienden a no preferir la lectura como actividad.
+
+**Técnicos y Lectura:** Los técnicos son quienes más disfrutan de la lectura entre los diferentes niveles académicos.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = `NIVEL ACADEMICO`, fill = GUSTO)) +
+  geom_bar(position = "fill") +
+  labs(title = "Distribución de Gustos por Nivel Académico", x = "Nivel Académico", y = "Proporción") +
+  theme_minimal()
+```
+
+# Análisis de Salario por Gusto
+
+Según el tipo de actividad podemos evidenciar que:
+
+-   **Deporte:** Salarios moderados con algunos ingresos altos, sugiriendo diversidad en los ingresos.
+-   **Descansar:** Consistentemente bajos salarios, indicando menor variabilidad en ingresos.
+-   **Leer:** Salarios bajos y concentrados, con pocos ingresos altos.
+-   **Música:** Mayor variabilidad salarial, indicando diversidad en ingresos.
+-   **Otras Actividades:** Mayor dispersión y altos salarios, sugiriendo variedad de ocupaciones.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = GUSTO, y = SALARIO)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Salario por Gusto", x = "Gusto", y = "Salario") +
+  theme_minimal()
+```
+
+# Análisis de vivienda por salario
+
+```{r}
+asimetria_por_vivienda_salario <- base_de_datos_1 %>%
+  group_by(VIVIENDA) %>%
+  summarise(
+    Media = mean(SALARIO),
+    Mediana = median(SALARIO),
+    SD = sd(SALARIO),
+    Max = max(SALARIO),
+    Min = min(SALARIO),
+  ) %>%
+  mutate(
+    Media = dollar(Media),
+    Mediana = dollar(Mediana),
+    SD = dollar(SD), 
+    Max = dollar(Max),
+    Min = dollar(Min),
+  )
+
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_vivienda_salario, caption = "Análisis de Salario por Tipo de Vivienda")
+```
+
+# Análisis de vivienda por salario
+
+```{r}
+asimetria_por_vivienda_salario <- base_de_datos_1 %>%
+  group_by(VIVIENDA) %>%
+  summarise(
+    Asim = round(skewness(SALARIO), 2), # Asimetría
+    Media = mean(SALARIO),
+    Mediana = median(SALARIO),
+    SD = sd(SALARIO), # Desviación estándar
+    Curt = round(kurtosis(SALARIO), 2), # Curtosis
+    IQR = IQR(SALARIO) # Rango intercuartílico
+  ) %>%
+  mutate(
+    Media = dollar(Media),
+    Mediana = dollar(Mediana),
+    SD = dollar(SD), # Formatear desviación estándar en dólares
+    IQR = dollar(IQR)
+  )
+
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_vivienda_salario, caption = "Análisis de Salario por Tipo de Vivienda")
+```
+
+# Análisis de vivienda por salario
+
+**Vivienda en Arriendo** muestra la mayor dispersión en salarios, con una alta asimetría y curtosis, indicando la presencia de salarios muy altos que distorsionan la distribución. Los inquilinos pueden estar en situaciones muy diversas de ingresos, con algunos que ganan significativamente más que otros.
+
+**Vivienda Familiar** tiene una distribución más equilibrada, con menos variación extrema en salarios. La diferencia moderada entre media y mediana sugiere que hay menos influencia de salarios extremos.
+
+**Vivienda Propia** está asociada con salarios más altos en promedio. Aunque todavía hay cierta dispersión, la tendencia general sugiere que aquellos con vivienda propia tienen niveles de ingresos más altos, lo cual podría estar relacionado con la capacidad financiera para comprar una propiedad.
+
+```{r}
+#Crear gráficos de barras para cada tipo de vivienda con anotaciones
+estadisticas_vivienda <- base_de_datos_1 %>%
+  group_by(VIVIENDA) %>%
+  summarise(
+    Asimetría = skewness(SALARIO),
+    Media = mean(SALARIO),
+    Mediana = median(SALARIO),
+    Curtosis = kurtosis(SALARIO),
+    Maximo = max(SALARIO),
+    Minimo = min(SALARIO)
+  )
+
+grafico_compuesto <- ggplot(base_de_datos_1, aes(x = SALARIO)) +
+  stat_bin(aes(y = ..count..), binwidth = 100000, fill = "grey", color = "black", alpha = 0.7, position = "identity") + # Usar stat_bin para contar ocurrencias
+  geom_vline(data = estadisticas_vivienda, aes(xintercept = Media, color = "Media"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_vivienda, aes(xintercept = Mediana, color = "Mediana"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_vivienda, aes(xintercept = Maximo, color = "Maximo"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_vivienda, aes(xintercept = Minimo, color = "Minimo"), linetype = "dashed", size = 1) +
+  facet_wrap(~ VIVIENDA, ncol = 1, scales = "free_x") + # Escalas libres para cada faceta
+  labs(title = "Distribución de Salario Segmentado por Tipo de Vivienda",
+       x = "Salario",
+       y = "Frecuencia") +
+  theme_minimal() +
+  scale_color_manual(name = "Estadístico",
+                     values = c("Media" = "red", "Mediana" = "blue", "Maximo" = "darkgreen", "Minimo" = "purple")) +
+  theme(legend.position = "right") +  # Mantener la leyenda a la derecha
+  expand_limits(x = max(base_de_datos_1$SALARIO) * 1.3) +
+  scale_x_continuous(labels = comma) + 
+  geom_label(data = estadisticas_vivienda, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 11, label = paste("Media:", dollar(Media))),
+             color = "red", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_vivienda, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 8.5, label = paste("Mediana:", dollar(Mediana))),
+             color = "blue", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_vivienda, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 6, label = paste("Máximo:", dollar(Maximo))),
+             color = "darkgreen", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_vivienda, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 3.5, label = paste("Minimo:", dollar(Minimo))),
+             color = "purple", fill = "white", hjust = 0, size = 3) 
+print(grafico_compuesto)
+
+```
+
+# Análisis de Nivel Academico por Salario
+
+```{r}
+asimetria_por_nivel_academico_salario <- base_de_datos_1 %>%
+  group_by(`NIVEL ACADEMICO`) %>%
+  summarise(
+    Media = mean(SALARIO),
+    Mediana = median(SALARIO),
+    SD = sd(SALARIO),
+    Max = max(SALARIO),
+    Min = min(SALARIO),
+  ) %>%
+  mutate(
+    Media = dollar(Media),
+    Mediana = dollar(Mediana),
+    SD = dollar(SD), 
+    Max = dollar(Max),
+    Min = dollar(Min),
+  )
+
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_nivel_academico_salario, caption = "Análisis de Salario por Nivel Academico")
+```
+
+# Análisis de Nivel Academico por Salario
+
+```{r}
+asimetria_por_nivel_academico_salario <- base_de_datos_1 %>%
+  group_by(`NIVEL ACADEMICO`) %>%
+  summarise(
+    Asim = round(skewness(SALARIO), 2), # Asimetría
+    Media = mean(SALARIO),
+    Mediana = median(SALARIO),
+    SD = sd(SALARIO), # Desviación estándar
+    Curt = round(kurtosis(SALARIO), 2), # Curtosis
+    IQR = IQR(SALARIO) # Rango intercuartílico
+  ) %>%
+  mutate(
+    Media = dollar(Media),
+    Mediana = dollar(Mediana),
+    SD = dollar(SD), # Formatear desviación estándar en dólares
+    IQR = dollar(IQR)
+  )
+
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_nivel_academico_salario, caption = "Análisis de Salario por Nivel Academico")
+```
+
+# Análisis de Nivel Academico por Salario
+
+**Postgrado** ofrece una mayor consistencia en términos de salarios, con todos los individuos dentro de un rango estrecho, lo que refleja menos variabilidad y, posiblemente, más seguridad salarial.
+
+**Bachillerato y Profesional** muestran una mayor variabilidad salarial, lo que sugiere oportunidades para salarios muy altos pero también un riesgo de salarios bajos.
+
+**Técnico** se encuentra en un punto intermedio, con variabilidad moderada y menores riesgos de extremos salariales, lo que podría hacerlo una opción atractiva para estabilidad y crecimiento.
+
+```{r}
+#Crear gráficos de barras para cada tipo de vivienda con anotaciones
+estadisticas_nivel_academico <- base_de_datos_1 %>%
+  group_by(`NIVEL ACADEMICO`) %>%
+  summarise(
+    Asimetría = skewness(SALARIO),
+    Media = mean(SALARIO),
+    Mediana = median(SALARIO),
+    Curtosis = kurtosis(SALARIO),
+    Maximo = max(SALARIO),
+    Minimo = min(SALARIO)
+  )
+
+grafico_compuesto <- ggplot(base_de_datos_1, aes(x = SALARIO)) +
+  stat_bin(aes(y = ..count..), binwidth = 100000, fill = "grey", color = "black", alpha = 0.7, position = "identity") + # Usar stat_bin para contar ocurrencias
+  geom_vline(data = estadisticas_nivel_academico, aes(xintercept = Media, color = "Media"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_nivel_academico, aes(xintercept = Mediana, color = "Mediana"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_nivel_academico, aes(xintercept = Maximo, color = "Maximo"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_nivel_academico, aes(xintercept = Minimo, color = "Minimo"), linetype = "dashed", size = 1) +
+  facet_wrap(~ `NIVEL ACADEMICO`, ncol = 1, scales = "free_x") + # Escalas libres para cada faceta
+  labs(title = "Distribución de Salario Segmentado por Nivel Academico",
+       x = "Salario",
+       y = "Frecuencia") +
+  theme_minimal() +
+  scale_color_manual(name = "Estadístico",
+                     values = c("Media" = "red", "Mediana" = "blue", "Maximo" = "darkgreen", "Minimo" = "purple")) +
+  theme(legend.position = "right") +  # Mantener la leyenda a la derecha
+  expand_limits(x = max(base_de_datos_1$SALARIO) * 1.3) +
+  scale_x_continuous(labels = comma) + 
+  geom_label(data = estadisticas_nivel_academico, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 11, label = paste("Media:", dollar(Media))),
+             color = "red", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_nivel_academico, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 8.5, label = paste("Mediana:", dollar(Mediana))),
+             color = "blue", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_nivel_academico, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 6, label = paste("Máximo:", dollar(Maximo))),
+             color = "darkgreen", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_nivel_academico, aes(x = max(base_de_datos_1$SALARIO) * 1.05, y = 3.5, label = paste("Minimo:", dollar(Minimo))),
+             color = "purple", fill = "white", hjust = 0, size = 3) 
+print(grafico_compuesto)
+
+```
+
+# Salario, Nivel Académico y Tipo de Vivienda
+
+-   Las personas con **postgrado** tienen los salarios promedio más altos en comparación con otros niveles académicos.
+
+-   El tipo de vivienda **propia** o **familiar** tiende a tener mayores ingresos en todos los niveles académicos, exceptuando **técnico**
+
+```{r}
+# Segmentación por Nivel Académico y Tipo de Vivienda
+segmentacion <- base_de_datos_1 %>%
+  group_by(`NIVEL ACADEMICO`, VIVIENDA) %>%
+  summarise(
+    Media_Salario = mean(SALARIO, na.rm = TRUE),
+    SD_Salario = sd(SALARIO, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Visualización
+ggplot(segmentacion, aes(x = `NIVEL ACADEMICO`, y = Media_Salario, fill = VIVIENDA)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Segmentación de Salarios por Nivel Académico y Tipo de Vivienda",
+       x = "Nivel Académico",
+       y = "Salario Promedio") +
+  theme_minimal()
+```

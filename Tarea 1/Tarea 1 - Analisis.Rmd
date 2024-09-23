@@ -1,0 +1,60 @@
+---
+title: "Tarea 1"
+output: html_notebook
+---
+
+```{r install package}
+# Instalar tidyverse 
+install.packages("tidyverse")
+
+# Instalar ggplot2 
+install.packages("ggplot2")
+
+# Cargar la librería ggplot2
+library(ggplot2)
+```
+
+```{r}
+bd_1 <- read.csv("datos.csv")
+```
+
+```{r}
+View (bd_1)
+```
+
+```{r Analísis Estado Civil}
+ggplot(bd_1, aes(x=Estado_Civil, fill = Estado_Civil)) + 
+  geom_bar() + 
+  labs(title="Distribución de Estado Civil", x="Color Favorito", y="Frecuencia")
+```
+```{r}
+ggplot(bd_1, aes(x = Estado_Civil)) +
+  geom_bar(fill = "blue", color = "black") +
+  ggtitle("Distribución de Estado Civil") +
+  xlab("Estado Civil") +
+  ylab("Frecuencia")
+```
+
+
+```{r Analísis Genero}
+ggplot(bd_1, aes(x=Genero, fill = Genero)) + 
+  geom_bar() + 
+  labs(title="Distribución de Estado Civil", x="Color Favorito", y="Frecuencia")
+```
+
+
+```{r Distribución Cantidad de Hijos}
+ggplot(bd_1, aes(x = Hijos)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+  ggtitle("Distribución de Hijos") +
+  xlab("Número de Hijos") +
+  ylab("Frecuencia")
+```
+
+```{r Distribución Cantidad de Hijos}
+ggplot(bd_1, aes(x = Escolaridad)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+  ggtitle("Distribución de Escolaridad (años)") +
+  xlab("Escolaridad (años)") +
+  ylab("Frecuencia")
+```

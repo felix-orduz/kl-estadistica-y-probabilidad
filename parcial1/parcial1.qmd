@@ -1,0 +1,636 @@
+---
+title: "Parcial1"
+format: pptx
+editor: visual
+css: style.css
+always_allow_html: yes
+---
+
+```{r}
+#| warning: false
+#| echo: false
+#| output: false
+
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+# Instalar y cargar el paquete readxl si es necesario
+if (!requireNamespace("readxl", quietly = TRUE)) {
+  install.packages("readxl")
+}
+library(readxl)
+# Leer el archivo de Excel sin mostrar la salida en la presentación
+base_de_datos_1 <- read_excel("datos_ingenieria.xlsx")
+#View(base_de_datos_1)
+
+## libreria para curtosis y asimetria
+if (!requireNamespace("moments", quietly = TRUE)) {
+  install.packages("moments")
+}
+library(moments)
+
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+if (!requireNamespace("gridExtra", quietly = TRUE)) {
+  install.packages("gridExtra")
+}
+library(gridExtra)
+
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
+
+library(dplyr)
+
+if (!requireNamespace("knitr", quietly = TRUE)) {
+  install.packages("knitr")
+}
+library(knitr)
+
+if (!requireNamespace("scales", quietly = TRUE)) {
+  install.packages("scales")
+}
+library(scales) # Para formatear los números con símbolo de dólar y separador de miles
+
+if (!requireNamespace("kableExtra", quietly = TRUE)) {
+  install.packages("kableExtra")
+}
+library(kableExtra) # Para estilos adicionales en tablas
+
+if (!requireNamespace("gt", quietly = TRUE)) {
+  install.packages("gt")
+}
+library(gt)
+
+if (!requireNamespace("ggcorrplot", quietly = TRUE)) {
+  install.packages("ggcorrplot")
+}
+if (!requireNamespace("corrplot", quietly = TRUE)) {
+  install.packages("corrplot")
+}
+
+# Cargar los paquetes
+library(ggcorrplot)
+library(corrplot)
+```
+
+## Análisis Sexo
+
+Hay un porcentaje superior de Mujeres con un 52.2% sobre el 47.8% de hombres
+
+```{r}
+datos_summarized <- base_de_datos_1 %>%
+  group_by(Sexo) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(datos_summarized, aes(x = Sexo, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_text(aes(label = paste0(count, " (", round(percentage, 1), "%)")), 
+            vjust = -0.5) +
+  labs(title = "Distribución de Sexo",
+       x = "Sexo",
+       y = "Frecuencia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Análisis Jornada
+
+Hay un leve porcentaje superior de jornada Nocturna con un 51% sobre el 49% de jornada Diurna
+
+```{r}
+datos_summarized <- base_de_datos_1 %>%
+  group_by(Jornada) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(datos_summarized, aes(x = Jornada, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_text(aes(label = paste0(count, " (", round(percentage, 1), "%)")), 
+            vjust = -0.5) +
+  labs(title = "Distribución de Jornada",
+       x = "Jornada",
+       y = "Frecuencia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Análisis Nivel Estrés
+
+La distribución del estrés es de la siguiente forma:
+
+-   Nivel Medio: 32%
+-   Nivel Muy Bajo: 26.6%
+-   Nivel Bajo: 26.2%
+-   Nivel Alto: 9.2%
+-   Nivel Muy Alto: 5.6%
+
+```{r}
+datos_summarized <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(datos_summarized, aes(x = Nivel_Stress, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_text(aes(label = paste0(count, " (", round(percentage, 1), "%)")), 
+            vjust = -0.5) +
+  labs(title = "Distribución de Nivel de Estrés",
+       x = "Nivel De Estrés",
+       y = "Frecuencia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Análisis Notas de Matemáticas
+
+la distribución de las notas de matemáticas es platicúrtica y muestra una distribución casi normal con una ligera asimetría negativa de solo -0.07. La casi igualdad entre la media y la mediana tambien es evidencia de que los datos estan agrupados al centro de la distribución, no existen valores extremos ni outliers, hay un predominio de que los estudiantes en matematicas obtienen una calificación cercana a la media o mediana 77-78
+
+```{r}
+asimetria_mat <- skewness(base_de_datos_1$Matemáticas)
+curtosis_mat <- kurtosis(base_de_datos_1$Matemáticas)
+media_mat <- mean(base_de_datos_1$Matemáticas)
+mediana_mat <- median(base_de_datos_1$Matemáticas)
+min_mat <- min(base_de_datos_1$Matemáticas)
+max_mat <- max(base_de_datos_1$Matemáticas)
+
+grafico_barras_mate <- ggplot(base_de_datos_1, aes(x = Matemáticas)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 1,
+                 fill = "grey",
+                 color = "black",
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = media_mat, color = "Media"),
+             linetype = "dashed",
+             size = 1) +
+  geom_vline(aes(xintercept = mediana_mat, color = "Mediana"),
+             linetype = "dashed",
+             size = 1) +
+  scale_color_manual(name = "Estadístico",
+                     values = c(Media = "red", Mediana = "blue")) +
+  labs(title = "Distribución de Notas De Matemáticas (con Media y Mediana)",
+       x = "Matemáticas",
+       y = "Densidad") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Asimetría: ", round(asimetria_mat, 2)),
+           hjust = 1.1, vjust = 2, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Media: ", round(media_mat, 2)),
+           hjust = 1.1, vjust = 4, size = 4, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Mediana: ", round(mediana_mat, 2)),
+           hjust = 1.1, vjust = 6, size = 4, color = "blue") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Curtosis: ", round(curtosis_mat, 2)),
+           hjust = 1.1, vjust = 8, size = 4, color = "purple") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Minimo: ", round(min_mat, 2)),
+           hjust = 1.1, vjust = 10, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Maximo: ", round(max_mat, 2)),
+           hjust = 1.1, vjust = 12, size = 4, color = "black")
+
+boxplot_mate <- ggplot(base_de_datos_1, aes(x = Matemáticas)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "",
+       x = "Matemáticas") +
+  theme_minimal()
+
+# Mostrar ambos gráficos en la misma diapositiva
+grid.arrange(grafico_barras_mate, boxplot_mate, ncol = 1, heights = c(6, 2))
+```
+
+## Análisis Notas de Programación
+
+la distribución de las notas de programación es platicúrtica y muestra una distribución casi normal con una ligera asimetría negativa de solo -0.07.La casi igualdad entre la media (77.93) y la mediana (78) evidencia de que los datos estan agrupados al centro de la distribución. No se observan outliers significativos, lo que sugiere que la mayoría de los estudiantes obtienen calificaciones cercanas a la media o mediana 77-78.
+
+```{r}
+asimetria_prog <- skewness(base_de_datos_1$Programacion)
+curtosis_prog <- kurtosis(base_de_datos_1$Programacion)
+media_prog <- mean(base_de_datos_1$Programacion)
+mediana_prog <- median(base_de_datos_1$Programacion)
+max_prog <- max(base_de_datos_1$Programacion)
+min_prog <- min(base_de_datos_1$Programacion)
+
+grafico_barras_prog <- ggplot(base_de_datos_1, aes(x = Programacion)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 1,
+                 fill = "grey",
+                 color = "black",
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = media_mat, color = "Media"),
+             linetype = "dashed",
+             size = 1) +
+  geom_vline(aes(xintercept = mediana_mat, color = "Mediana"),
+             linetype = "dashed",
+             size = 1) +
+  scale_color_manual(name = "Estadístico",
+                     values = c(Media = "red", Mediana = "blue")) +
+  labs(title = "Distribución de Notas De Programación (con Media y Mediana)",
+       x = "Programación",
+       y = "Densidad") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Asimetría: ", round(asimetria_mat, 2)),
+           hjust = 1.1, vjust = 2, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Media: ", round(media_prog, 2)),
+           hjust = 1.1, vjust = 4, size = 4, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Mediana: ", round(mediana_prog, 2)),
+           hjust = 1.1, vjust = 6, size = 4, color = "blue") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Curtosis: ", round(curtosis_prog, 2)),
+           hjust = 1.1, vjust = 8, size = 4, color = "purple") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Minimo: ", round(min_prog, 2)),
+           hjust = 1.1, vjust = 10, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Maximo: ", round(max_prog, 2)),
+           hjust = 1.1, vjust = 12, size = 4, color = "black")
+
+boxplot_prog <- ggplot(base_de_datos_1, aes(x = Programacion)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "",
+       x = "Programación") +
+  theme_minimal()
+
+grid.arrange(grafico_barras_prog, boxplot_prog, ncol = 1, heights = c(6, 2))
+```
+
+## Análisis Trabajo en Equipo
+
+la distribución de las notas de trabajo en equipo es platicúrtica y muestra una distribución casi normal con una ligera asimetría positiva de solo 0.03 lo que indica que hay una leve cola a valores mas altos que la media. La casi igualdad entre la media y la mediana tambien es evidencia de que los datos estan agrupados al centro de la distribución, no existen valores extremos ni outliers. Pero comparando los valores con las notos de programación y matemáticas se evidencia que la que la media de trabajo en equipo (42.57) esta muy por debajo de la media de las otras dos calificaciones. vemos un bajo desempeño en trabajo en equipo con un valor maximo en 70 y un minimo en 16.
+
+```{r}
+asimetria_traeq <- skewness(base_de_datos_1$Trabajo_en_Equipo)
+curtosis_traeq <- kurtosis(base_de_datos_1$Trabajo_en_Equipo)
+media_traeq <- mean(base_de_datos_1$Trabajo_en_Equipo)
+mediana_traeq <- median(base_de_datos_1$Trabajo_en_Equipo)
+max_traeq <- max(base_de_datos_1$Trabajo_en_Equipo)
+min_traeq <- min(base_de_datos_1$Trabajo_en_Equipo)
+
+grafico_barras_traeq <- ggplot(base_de_datos_1, aes(x = Trabajo_en_Equipo)) +
+  geom_histogram(aes(y = ..density..),
+                 binwidth = 1,
+                 fill = "grey",
+                 color = "black",
+                 alpha = 0.7) +
+  geom_vline(aes(xintercept = media_traeq, color = "Media"),
+             linetype = "dashed",
+             size = 1) +
+  geom_vline(aes(xintercept = mediana_traeq, color = "Mediana"),
+             linetype = "dashed",
+             size = 1) +
+  scale_color_manual(name = "Estadístico",
+                     values = c(Media = "red", Mediana = "blue")) +
+  labs(title = "Distribución de Notas De Trabajo En Equipo (con Media y Mediana)",
+       x = "Trabajo En Equipo",
+       y = "Densidad") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Asimetría: ", round(asimetria_traeq, 2)),
+           hjust = 1.1, vjust = 2, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Media: ", round(media_traeq, 2)),
+           hjust = 1.1, vjust = 4, size = 4, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Mediana: ", round(mediana_traeq, 2)),
+           hjust = 1.1, vjust = 6, size = 4, color = "blue") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Curtosis: ", round(curtosis_traeq, 2)),
+           hjust = 1.1, vjust = 8, size = 4, color = "purple") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Valor Maximo: ", round(max_traeq, 2)),
+           hjust = 1.1, vjust = 10, size = 4, color = "black") +
+  annotate("text", x = Inf, y = Inf, label = paste0("Valor Minimo: ", round(min_traeq, 2)),
+           hjust = 1.1, vjust = 12, size = 4, color = "black")
+
+boxplot_traeq <- ggplot(base_de_datos_1, aes(x = Trabajo_en_Equipo)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "",
+       x = "Trabajo En Equipo") +
+  theme_minimal()
+
+grid.arrange(grafico_barras_traeq, boxplot_traeq, ncol = 1, heights = c(6, 2))
+```
+
+## Correlacion entre notas
+
+Las correlaciones entre las calificaciones en Programacion, Matemáticas y Trabajo_en_Equipo son bajas, lo que indica que el desempeño en una de estas materias no está fuertemente relacionado con el desempeño en las otras.
+
+La ausencia de correlaciones significativas puede indicar que los factores que afectan el desempeño en estas materias son independientes entre si y el trabajo en equipo posiblemente es de una tercera materia.
+
+```{r}
+# Calcular la matriz de correlación entre las tres variables
+correlacion_materias <- cor(base_de_datos_1[, c("Trabajo_en_Equipo", "Programacion", "Matemáticas")], use = "complete.obs")
+
+corrplot(correlacion_materias, 
+         method = "color", 
+         type = "upper", 
+         addCoef.col = "black", 
+         tl.col = "black", 
+         tl.srt = 50)
+```
+
+## Analisis Segmentado Sexo Jornada
+
+No se ve una marcada diferencia entre la distribucion de sexo y jornada de estudio.
+
+Distribución de Hombres y Mujeres en las diferentes Jornadas:
+
+-   Para las mujeres, el 52.9% estudian de noche y el 47.1% de día.
+-   Para los hombres, el 49% estudian de noche y el 51% de día.
+
+Aunque hay una pequeña diferencia, con un 52.9% de mujeres estudiando de noche comparado con un 49% de hombres, esta diferencia no es muy significativa. Ambos géneros tienen una distribución bastante equilibrada entre estudiar de día o de noche.
+
+```{r}
+datos_summarized <- base_de_datos_1 %>%
+  group_by(Sexo, Jornada) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Crear el gráfico de barras apiladas con porcentajes
+ggplot(datos_summarized, aes(x = Sexo, y = percentage, fill = Jornada)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
+            position = position_fill(vjust = 0.5), 
+            size = 3, 
+            color = "white") +
+  labs(title = "Distribución de Sexo por Jornada", 
+       x = "Sexo", 
+       y = "Proporción") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+```
+
+## Analisis Segmentado Sexo Nivel Estrés
+
+El gráfico muestra diferencias claras en los niveles de estrés reportados entre hombres y mujeres. Los hombres tienden a reportar niveles de estrés más altos, con un 18% en el nivel "Alto" y un 8.4% en "Muy alto", en comparación con las mujeres, donde solo un 1.9% reporta niveles de estrés "Alto" y un 3.1% "Muy alto". La mayoría de las mujeres reportan niveles de estrés "Bajo" y "Muy bajo".
+
+```{r}
+datos_summarized <- base_de_datos_1 %>%
+  group_by(Sexo, Nivel_Stress) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Crear el gráfico de barras apiladas con porcentajes
+ggplot(datos_summarized, aes(x = Sexo, y = percentage, fill = Nivel_Stress)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
+            position = position_fill(vjust = 0.5), 
+            size = 3, 
+            color = "white") +
+  labs(title = "Distribución de Sexo por Nivel de Estrés", 
+       x = "Sexo", 
+       y = "Proporción") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+```
+
+## Analisis Segmentado Jornada Nivel Estrés
+
+El gráfico muestra que los estudiantes de jornada diurna tienden a reportar niveles de estrés más altos que los estudiantes de jornada nocturna, especialmente en el nivel "Muy alto" (8.6% en diurno vs. 2.7% en nocturno). Sin embargo, la jornada nocturna tiene una proporción mayor de estudiantes con niveles de estrés "Medio" (34.1% vs. 29.8%) y "Muy bajo" (29% vs. 24.1%).
+
+```{r}
+datos_summarized <- base_de_datos_1 %>%
+  group_by(Jornada, Nivel_Stress) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Crear el gráfico de barras apiladas con porcentajes
+ggplot(datos_summarized, aes(x = Jornada, y = percentage, fill = Nivel_Stress)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
+            position = position_fill(vjust = 0.5), 
+            size = 3, 
+            color = "white") +
+  labs(title = "Distribución de Jornada por Nivel de Estrés", 
+       x = "Jornada", 
+       y = "Proporción") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+```
+
+## Analisis Segmentado Sexo Notas de Matemáticas
+
+**Mejores Desempeño de Mujeres:** El gráfico indica que las mujeres, en promedio, tienen un mejor desempeño en matemáticas que los hombres. Esto se refleja en una mediana más alta y una distribución más concentrada.
+
+**Variabilidad entre Hombres:** La mayor variabilidad en las notas de los hombres (caja mas grande) sugiere que hay un grupo más diverso de rendimiento en matemáticas, con algunos estudiantes que obtienen calificaciones más bajas.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = Sexo, y = Matemáticas)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Notas de Matemáticas por Sexo", x = "Sexo", y = "Notas de Matemáticas") +
+  theme_minimal()
+```
+
+## Analisis Segmentado Sexo Notas de Programación
+
+**Mejores Desempeño de Mujeres:** El gráfico indica que las mujeres, en promedio, tienen un mejor desempeño en programació que los hombres. Esto se refleja en una mediana más alta y una distribución más concentrada.
+
+**Variabilidad entre Hombres:** La mayor variabilidad en las notas de los hombres (caja mas grande) sugiere que hay un grupo más diverso de rendimiento en programación, con algunos estudiantes que obtienen calificaciones más bajas.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = Sexo, y = Programacion)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Notas de Programación por Sexo", x = "Sexo", y = "Notas De Programación") +
+  theme_minimal()
+```
+
+## Analisis Segmentado Sexo Notas Trabajo En Equipo
+
+El desempeño sigue siendo similar al evidenciado para las notas de Matemáticas y Programación, donde las mujeres tienes mejores calificaciones.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = Sexo, y = Trabajo_en_Equipo)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Notas Trabajo En Equipo por Sexo", x = "Sexo", y = "Notas Trabajo En Equipo") +
+  theme_minimal()
+```
+
+# Análisis de nivel de estrés por notas de matemáticas
+
+```{r}
+asimetria_por_stress_matematicas <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(
+    Media = mean(Matemáticas),
+    Mediana = median(Matemáticas),
+    SD = sd(Matemáticas),
+    Max = max(Matemáticas),
+    Min = min(Matemáticas),
+  ) 
+
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_stress_matematicas, caption = "Análisis de notas de Matematicas por Nivel De Estrés")
+```
+
+# Análisis de nivel de estrés por notas de matemáticas
+
+```{r}
+asimetria_por_stress_matematicas <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(
+    Asim = round(skewness(Matemáticas), 2), # Asimetría
+    Media = mean(Matemáticas),
+    Mediana = median(Matemáticas),
+    SD = sd(Matemáticas), # Desviación estándar
+    Curt = round(kurtosis(Matemáticas), 2), # Curtosis
+    IQR = IQR(Matemáticas) # Rango intercuartílico
+  ) 
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_stress_matematicas, caption = "Análisis de notas de Matematicas por Nivel De Estrés")
+```
+
+# Análisis de nivel de estrés por notas de matemáticas
+
+**Niveles de Estrés Bajos y Muy Bajos:** Los estudiantes con niveles de estrés "Bajo" y "Muy bajo" tienden a tener mejores calificaciones en matemáticas, con medias de 82.55 y 81.63 respectivamente. Esto sugiere que un menor nivel de estrés puede estar asociado con un mejor rendimiento académico.
+
+**Niveles de Estrés Altos y Muy Altos:** Los estudiantes con niveles de estrés "Alto" y "Muy alto" tienen las calificaciones más bajas, con medias de 63.98 y 65.46 respectivamente. Esto podría indicar que un mayor nivel de estrés tiene un impacto negativo en el rendimiento en matemáticas.
+
+```{r}
+estadisticas_stress <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(
+    Asimetria = skewness(Matemáticas),
+    Media = mean(Matemáticas),
+    Mediana = median(Matemáticas),
+    Curtosis = kurtosis(Matemáticas),
+    Maximo = max(Matemáticas),
+    Minimo = min(Matemáticas)
+  )
+
+# Crear el gráfico de distribución de notas de matemáticas por nivel de estrés
+grafico_stress_matematicas <- ggplot(base_de_datos_1, aes(x = Matemáticas)) +
+  geom_histogram(aes(y = ..count..), binwidth = 5, fill = "grey", color = "black", alpha = 0.7) + 
+  geom_vline(data = estadisticas_stress, aes(xintercept = Media, color = "Media"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_stress, aes(xintercept = Mediana, color = "Mediana"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_stress, aes(xintercept = Maximo, color = "Maximo"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_stress, aes(xintercept = Minimo, color = "Minimo"), linetype = "dashed", size = 1) +
+  facet_wrap(~ Nivel_Stress, ncol = 1, scales = "free_x") + 
+  labs(title = "Distribución de Notas de Matemáticas Segmentado por Nivel de Estrés",
+       x = "Notas de Matemáticas",
+       y = "Nivel Estrés") +
+  theme_minimal() +
+  scale_color_manual(name = "Estadístico",
+                     values = c("Media" = "red", "Mediana" = "blue", "Maximo" = "darkgreen", "Minimo" = "purple")) +
+  theme(legend.position = "right") +
+  expand_limits(x = c(min(base_de_datos_1$Matemáticas), max(base_de_datos_1$Matemáticas) * 1.3)) +
+  scale_x_continuous(labels = scales::comma) + 
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Matemáticas) * 1.05, y = 30, label = paste("Media:", round(Media, 2))),
+             color = "red", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Matemáticas) * 1.05, y = 15, label = paste("Mediana:", round(Mediana, 2))),
+             color = "blue", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Matemáticas) * 1.15, y = 30, label = paste("Máximo:", round(Maximo, 2))),
+             color = "darkgreen", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Matemáticas) * 1.15, y = 15, label = paste("Mínimo:", round(Minimo, 2))),
+             color = "purple", fill = "white", hjust = 0, size = 3) 
+
+print(grafico_stress_matematicas)
+
+```
+
+# Análisis de nivel de estrés por notas de programación
+
+```{r}
+asimetria_por_stress_prog <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(
+    Media = mean(Programacion),
+    Mediana = median(Programacion),
+    SD = sd(Programacion),
+    Max = max(Programacion),
+    Min = min(Programacion),
+  ) 
+
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_stress_prog, caption = "Análisis de notas de Programación por Nivel De Estrés")
+```
+
+# Análisis de nivel de estrés por notas de programación
+
+```{r}
+asimetria_por_stress_prog <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(
+    Asim = round(skewness(Programacion), 2), # Asimetría
+    Media = mean(Programacion),
+    Mediana = median(Programacion),
+    SD = sd(Programacion), # Desviación estándar
+    Curt = round(kurtosis(Programacion), 2), # Curtosis
+    IQR = IQR(Programacion) # Rango intercuartílico
+  ) 
+# Mostrar la tabla formateada con kable
+kable(asimetria_por_stress_prog, caption = "Análisis de notas de Programación por Nivel De Estrés")
+```
+
+# Análisis de nivel de estrés por notas de programación
+
+**Media y Mediana Similares:** Las medias y medianas de las notas de programación son bastante consistentes a lo largo de los diferentes niveles de estrés, oscilando entre 74.31 (Alto) y 78.87 (Muy bajo). Esto indica que los estudiantes, independientemente de su nivel de estrés, mantienen un rendimiento relativamente uniforme en programación.
+
+**Desviación Estándar:** Las desviaciones estándar son bastante similares en todos los niveles de estrés, alrededor de 9 a 11 puntos, lo que sugiere una variabilidad comparable en las calificaciones independientemente del estrés.
+
+A diferencia de matemáticas, donde había una relación más clara entre menor estrés y mejores notas, en programación, los niveles de estrés no parecen tener un impacto significativo en el rendimiento.
+
+```{r}
+estadisticas_stress <- base_de_datos_1 %>%
+  group_by(Nivel_Stress) %>%
+  summarise(
+    Asimetria = skewness(Programacion),
+    Media = mean(Programacion),
+    Mediana = median(Programacion),
+    Curtosis = kurtosis(Programacion),
+    Maximo = max(Programacion),
+    Minimo = min(Programacion)
+  )
+
+# Crear el gráfico de distribución de notas de matemáticas por nivel de estrés
+grafico_stress_prog <- ggplot(base_de_datos_1, aes(x = Programacion)) +
+  geom_histogram(aes(y = ..count..), binwidth = 5, fill = "grey", color = "black", alpha = 0.7) + 
+  geom_vline(data = estadisticas_stress, aes(xintercept = Media, color = "Media"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_stress, aes(xintercept = Mediana, color = "Mediana"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_stress, aes(xintercept = Maximo, color = "Maximo"), linetype = "dashed", size = 1) +
+  geom_vline(data = estadisticas_stress, aes(xintercept = Minimo, color = "Minimo"), linetype = "dashed", size = 1) +
+  facet_wrap(~ Nivel_Stress, ncol = 1, scales = "free_x") + 
+  labs(title = "Distribución de Notas de Programaci´n Segmentado por Nivel de Estrés",
+       x = "Notas de Programación",
+       y = "Nivel Estrés") +
+  theme_minimal() +
+  scale_color_manual(name = "Estadístico",
+                     values = c("Media" = "red", "Mediana" = "blue", "Maximo" = "darkgreen", "Minimo" = "purple")) +
+  theme(legend.position = "right") +
+  expand_limits(x = c(min(base_de_datos_1$Programacion), max(base_de_datos_1$Programacion) * 1.3)) +
+  scale_x_continuous(labels = scales::comma) + 
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Programacion) * 1.05, y = 30, label = paste("Media:", round(Media, 2))),
+             color = "red", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Programacion) * 1.05, y = 15, label = paste("Mediana:", round(Mediana, 2))),
+             color = "blue", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Programacion) * 1.15, y = 30, label = paste("Máximo:", round(Maximo, 2))),
+             color = "darkgreen", fill = "white", hjust = 0, size = 3) +
+  geom_label(data = estadisticas_stress, aes(x = max(base_de_datos_1$Programacion) * 1.15, y = 15, label = paste("Mínimo:", round(Minimo, 2))),
+             color = "purple", fill = "white", hjust = 0, size = 3) 
+
+print(grafico_stress_prog)
+
+```
+
+## Análisis Segmentado Jornada Notas De Programación
+
+**Mediana Similar:** Las medianas para ambas jornadas son prácticamente iguales.
+
+**Rango y Dispersión:** Los rangos de las cajas en ambos grupos son comparables, lo que significa que la variabilidad en las notas de programación es similar en ambas jornadas.
+
+No hay diferencias significativas en las notas por la jornada.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = Jornada, y = Programacion)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Notas De Programación por Jornada", x = "Jornada", y = "Notas de Programación") +
+  theme_minimal()
+```
+
+## Análisis Segmentado Jornada Notas de Matemáticas
+
+**Mediana Ligeramente Mayor:** La mediana de las notas en la jornada nocturna es un poco más alta que en la jornada diurna, lo que indica que los estudiantes de la noche tienden a obtener calificaciones ligeramente superiores en promedio.
+
+**Rango de Notas:** El rango intercuartílico (IQR) y la dispersión general parecen ser similares entre ambas jornadas, lo que sugiere que, aunque hay una ligera ventaja para los estudiantes nocturnos en términos de mediana, la variabilidad de las notas es comparable.
+
+```{r}
+ggplot(base_de_datos_1, aes(x = Jornada, y = Matemáticas)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Notas de Matemáticas por Jornada", x = "Jornada", y = "Notas de Matemáticas") +
+  theme_minimal()
+```
